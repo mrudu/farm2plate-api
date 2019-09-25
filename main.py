@@ -12,6 +12,8 @@ from keras.models import model_from_json
 from PIL import Image
 from flask import jsonify
 
+# App configuration
+
 UPLOAD_FOLDER = 'uploads/'
 
 app = Flask(__name__)
@@ -21,7 +23,7 @@ app.secret_key = "secret key"
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
 
-file = request.files['mango_pic']
+# load model from file
 json_file = open('model.json', 'r')
 loaded_model_json = json_file.read()
 json_file.close()
