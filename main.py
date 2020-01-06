@@ -5,12 +5,11 @@ from flask import Flask
 from flask_cors import CORS
 from flask import Flask, flash, request, redirect, render_template
 from werkzeug.utils import secure_filename
-import keras
-from keras import backend as K
 import numpy as np
-from keras.models import model_from_json
 from PIL import Image
 from flask import jsonify
+
+from secret_model_code import mango_trainer_predict
 
 # App configuration
 
@@ -23,45 +22,10 @@ app.secret_key = "secret key"
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
 
-# load model from file
-json_file = open('model.json', 'r')
-loaded_model_json = json_file.read()
-json_file.close()
-mango_trainer = model_from_json(loaded_model_json)
-# load weights into new model
-mango_trainer.load_weights("model.h5")
-
-
-ALLOWED_EXTENSIONS = set(['txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'])
-
 ALLOWED_EXTENSIONS = set(['txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'])
 
 def allowed_file(filename):
 	return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
-def get_mango_data(index):
-	json_data = {}
-	if index == 0:
-		json_data["type_mango"] = "raw"
-		json_data["color_mango"] = "green"
-		json_data["texture_mango"] = "smooth and hard"
-		json_data["life_left"] = "12 days"
-	elif index == 1:
-		json_data["type_mango"] = "partially ripe"
-		json_data["color_mango"] = "green yellow"
-		json_data["texture_mango"] = "smooth and mildly soft with few spots"
-		json_data["life_left"] = "8 days"
-	elif index == 2:
-		json_data["type_mango"] = "ripe"
-		json_data["color_mango"] = "yellow"
-		json_data["texture_mango"] = "soft with lots of sports"
-		json_data["life_left"] = "3 days"
-	else:
-		json_data["type_mango"] = "overripe"
-		json_data["color_mango"] = "yellow brown"
-		json_data["texture_mango"] = "shrivelled and smelly"
-		json_data["life_left"] = "0 days"
-	return json_data
 
 def get_prediction(filename):
 	img = Image.open('uploads/'+filename).resize((256, 256))
@@ -70,10 +34,9 @@ def get_prediction(filename):
 	test_images.append(img)
 	test_images = np.array(test_images)
 
-	prediction = list(list(mango_trainer.predict(test_images))[0])
-	mango_data = get_mango_data(prediction.index(max(prediction)))
+
+	mango_data = mango_trainer_predict(test_images, filename)
 	return mango_data
-	
 
 # Route Handlers
 
@@ -89,15 +52,17 @@ def upload_file():
         # check if the post request has the file part
 		if 'mango_pic' not in request.files:
 			flash('No file part')
-			return jsonify(data="")
+			return jsonify(data='No file part')
+
+		file = request.files['mango_pic']
 		if file.filename == '':
 			flash('No file selected for uploading')
-			return jsonify(data="")
+			return jsonify(data='No file selected for uploading')
 		if file and allowed_file(file.filename):
-			filename = secure_filename(form_data["fileName"])
+			filename = form_data["filename"][0]
 			file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
 			mango_data = get_prediction(filename)
-			flash('File successfully uploaded -  It is a ' + mango_data["type_mango"] + " mango")
+			flash('File successfully uploaded -  It is a ' + mango_data["grade_stage"] + " mango")
 			return jsonify(data=mango_data)
 		else:
 			flash('Allowed file types are txt, pdf, png, jpg, jpeg, gif')
