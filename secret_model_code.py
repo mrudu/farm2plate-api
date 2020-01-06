@@ -15,6 +15,7 @@ mango_trainer = model_from_json(loaded_model_json)
 mango_trainer.load_weights("classifier_model.h5")
 # compiling stage
 mango_trainer.compile(optimizer = 'Adam' , loss = "sparse_categorical_crossentropy", metrics=["accuracy"])
+mango_trainer._make_predict_function()
 
 # Setting Up MySql Connection
 db_connection = mysql.connector.connect(
@@ -52,12 +53,28 @@ def get_mango_data(index, cie_data):
 
 def mango_trainer_predict(test_images, filename):
 	predictions = mango_trainer.predict(test_images)
-	write_to_database(predictions)
 
 	prediction = list(list(predictions)[0])
-	mango_data = get_mango_data(prediction.index(max(prediction)), process_cie_lab(filename, db_cursor))
+	cie_data = process_cie_lab(filename)
+
+
+	write_to_database(predictions, cie_data, filename)
+	mango_data = get_mango_data(prediction.index(max(prediction)), cie_data)
 	return mango_data
 
-def write_to_database(predictions):
-	db_cursor.execute("INSERT INTO Results_full_classifier (img_name,prediction,stage1,stage2,stage3,stage4) VALUES ('"+img_name+"','"+str(predictions)+"',"+str(100*predictions[0][0])+","+str(100*predictions[0][1])+","+str(100*predictions[0][2])+","+str(100*predictions[0][3])+")")
+def write_to_database(predictions, cie_data, filename):
+	db_cursor.execute("INSERT INTO Results_full_classifier (img_name,prediction,stage1,stage2,stage3,stage4) VALUES ('"+filename+"','"+str(predictions)+"',"+str(100*predictions[0][0])+","+str(100*predictions[0][1])+","+str(100*predictions[0][2])+","+str(100*predictions[0][3])+")")
+	db_cursor.execute("INSERT INTO CIELAB (type,fruit_id,L_value,a_value,b_value,minor_axis,major_axis,count_spots,count_mango,ratio,ratio_spots) VALUES ("+
+        "'FULL', '" +
+        filename +
+        "', '" + str(cie_data["L_value"]) +
+        "', " + str(cie_data["a_value"]) +
+        "," + str(cie_data["b_value"]) +
+        "," + str(cie_data["minor_axis"]) +
+        "," + str(cie_data["major_axis"]) +
+        "," + str(cie_data["count_spots"]) +
+        "," + str(cie_data["count_mango"]) +
+        "," + str(cie_data["ratio"]) +
+        "," + str(cie_data["ratio_spots"]) +
+    ")")
 	db_connection.commit()

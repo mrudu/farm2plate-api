@@ -141,11 +141,10 @@ def major_and_minor(img, list_vertices):
     ratio = major_length/minor_length
     return img, ratio, minor_length, major_length
 
-def process_cie_lab(img_name, db_cursor):
+def process_cie_lab(img_name):
     img_original = io.imread("uploads/"+img_name)
     ratio = img_original.shape[0]/img_original.shape[1]
-    img = cv2.resize(image, (256,int(256*ratio)))
-    # io.imsave('resize.png', img)
+    img = cv2.resize(img_original, (256,int(256*ratio)))
     list_vertices = vertices(img, 1)
     cropped_image, count_mango = region_of_interest(img, np.array([list_vertices], np.int32))
     lab = color.rgb2lab(cropped_image)
@@ -157,33 +156,18 @@ def process_cie_lab(img_name, db_cursor):
     spot_img, count_spots = spots(img_original)
     ratio_spots = count_spots/count_mango
 
-    db_cursor.execute("INSERT INTO CIELAB (type,fruit_id,L_value,a_value,b_value,minor_axis,major_axis,count_spots,count_mango,ratio,ratio_spots) VALUES ("+
-        "'FULL', '" +
-        img_name +
-        "', '" + str(lab_values[0]) + 
-        "', " + str(lab_values[1]) +
-        "," + str(lab_values[2]) +
-        "," + str(minor_length) +
-        "," + str(major_length) +
-        "," + str(count_spots) +
-        "," + str(count_mango) +
-        "," + str(ratio) +
-        "," + str(ratio_spots) +
-    ")")
-
     cie_lab_data = {}
     cie_lab_data["type"] = "FULL"
     cie_lab_data["fruit_id"] = img_name
     cie_lab_data["L_value"] = lab_values[0]
     cie_lab_data["a_value"] = lab_values[1]
     cie_lab_data["b_value"] = lab_values[2]
-    cie_lab_data["minor_axis"] = str(minor_length)
-    cie_lab_data["major_axis"] = str(major_length)
+    cie_lab_data["minor_axis"] = minor_length
+    cie_lab_data["major_axis"] = major_length
     cie_lab_data["count_spots"] = str(count_spots)
     cie_lab_data["count_mango"] = str(count_mango)
     cie_lab_data["ratio"] = str(ratio)
     cie_lab_data["ratio_spots"] = str(ratio_spots)
     
-    db_connection.commit()
     return cie_lab_data
     
