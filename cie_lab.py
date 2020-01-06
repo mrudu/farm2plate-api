@@ -37,7 +37,6 @@ def vertices(img, max):
     gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
     blur = cv2.GaussianBlur(img,(5,5),100)
     canny = cv2.Canny(blur,80,80)
-    io.imsave('canny.png',canny)
     width = img.shape[0]
     height = img.shape[1]
     list_vertices = []
