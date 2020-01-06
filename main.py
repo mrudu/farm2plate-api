@@ -9,7 +9,7 @@ import numpy as np
 from PIL import Image
 from flask import jsonify
 
-from secret_model_code import mango_trainer_predict
+from dummy_model_code import mango_trainer_predict
 
 # App configuration
 
