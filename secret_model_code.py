@@ -1,6 +1,22 @@
+# Supressing TF and other warnings
+import sys, os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+if not sys.warnoptions:
+	import warnings
+
+	def fxn():
+	    warnings.warn("deprecated", DeprecationWarning)
+
+	with warnings.catch_warnings():
+	    warnings.simplefilter("ignore")
+	    fxn()
+stderr = sys.stderr
+sys.stderr = open(os.devnull, 'w')
 import keras
 from keras import backend as K
 from keras.models import model_from_json
+sys.stderr = stderr
+
 from PIL import Image
 from flask import jsonify
 import mysql.connector
@@ -51,14 +67,14 @@ def get_mango_data(index, cie_data):
 	json_data["shelf_life"] = "dummy"
 	return json_data
 
-def mango_trainer_predict(test_images, filename):
+def mango_trainer_predict(test_images, input_data):
 	predictions = mango_trainer.predict(test_images)
 
 	prediction = list(list(predictions)[0])
-	cie_data = process_cie_lab(filename)
+	cie_data = process_cie_lab(input_data["image_file"])
 
 
-	write_to_database(predictions, cie_data, filename)
+	write_to_database(predictions, cie_data, input_data["image_file"])
 	mango_data = get_mango_data(prediction.index(max(prediction)), cie_data)
 	return mango_data
 

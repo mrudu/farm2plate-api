@@ -141,7 +141,7 @@ def major_and_minor(img, list_vertices):
     return img, ratio, minor_length, major_length
 
 def process_cie_lab(img_name):
-    img_original = io.imread("uploads/"+img_name)
+    img_original = io.imread(img_name)
     ratio = img_original.shape[0]/img_original.shape[1]
     img = cv2.resize(img_original, (256,int(256*ratio)))
     list_vertices = vertices(img, 1)

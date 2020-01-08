@@ -1,4 +1,4 @@
-def mango_trainer_predict(test_images, filename):
+def mango_trainer_predict(test_images, input_data):
 	json_data = {}
 	json_data["grade_stage"] = "dummy"
 	json_data["color"] = "dummy"
